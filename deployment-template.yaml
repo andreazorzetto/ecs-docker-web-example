@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: "${SERVICE_NAME}-template"
+objects:
+  - apiVersion: extensions/v1beta1
+    kind: Deployment
+    metadata:
+      namespace: "${NAMESPACE}"
+      name: "${SERVICE_NAME}"
+      labels:
+        app: "${SERVICE_NAME}"
+    spec:
+      progressDeadlineSeconds: 600
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          namespace: "${NAMESPACE}"
+          labels:
+            app: "${SERVICE_NAME}"
+        spec:
+          containers:
+            - name: "${SERVICE_NAME}"
+              image: "${DOCKER_IMAGE}"
+              imagePullPolicy: IfNotPresent
+              ports:
+                - containerPort: 80
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: "${SERVICE_NAME}"
+      namespace: "${NAMESPACE}"
+      labels:
+        app: "${SERVICE_NAME}"
+    spec:
+      type: ClusterIP
+      ports:
+        - name: https
+          port: 80
+          targetPort: 80
+          protocol: TCP
+      selector:
+        app: "${SERVICE_NAME}"
+parameters:
+  - description: Service name
+    name: SERVICE_NAME
+    required: true
+  - description: Docker image for the service
+    name: DOCKER_IMAGE
+    required: true
+  - description: Namespace for the service
+    name: NAMESPACE
+    value: "${SERVICE_NAME}"
